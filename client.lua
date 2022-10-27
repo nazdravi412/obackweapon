@@ -1,6 +1,21 @@
 local curWeapon = nil
 local ox_inventory = exports.ox_inventory
 local ped = cache.ped
+CivJob = "SACO"
+
+-- Begin ND Core Job Check
+NDCore = exports["ND_Core"]:GetCoreObject()	
+
+Citizen.CreateThread(function()
+	while true do
+		local on_duty = NDCore.Functions.GetSelectedCharacter()	
+		if(on_duty) then
+			PlayerJob = on_duty.job
+		end
+		Citizen.Wait(3000)
+	end
+end)
+-- End ND Core Job Check
 
 local Weapons = {
     [`weapon_assaultshotgun`] = { object = `w_sg_assaultshotgun`, item = 'WEAPON_ASSAULTSHOTGUN', rot = vector3(0,0,0)},
@@ -37,7 +52,7 @@ local Weapons = {
     [`WEAPON_COMBATMG_MK2`] = {object = `w_mg_combatmgmk2`, item = 'WEAPON_COMBATMG_MK2', rot = vector3(0,0,0)},
     [`WEAPON_COMBATMG`] = {object = `w_mg_combatmg`, item = 'WEAPON_COMBATMG', rot = vector3(0,0,0)},
     [`WEAPON_CARBINERIFLE_MK2`] = {object = `w_ar_carbineriflemk2`, item = 'WEAPON_CARBINERIFLE_MK2', rot = vector3(0,0,0)},
-    [`WEAPON_CARBINERIFLE`] = {object = `w_ar_carbinerifle`, item = 'WEAPON_CARBINERIFLE', rot = vector3(0,0,0)},
+    [`WEAPON_CARBINERIFLE`] = {object = `w_ar_carbinerifle`, item = 'WEAPON_CARBINERIFLE', rot = vector3(175.0,130.0,-0.5)},
     [`WEAPON_BULLPUPSHOTGUN`] = {object = `w_sg_bullpupshotgun`, item = 'WEAPON_BULLPUPSHOTGUN', rot = vector3(0,0,0)},
     [`WEAPON_BULLPUPRIFLE_MK2`] = {object = `w_ar_bullpupriflemk2`, item = 'WEAPON_BULLPUPRIFLE_MK2', rot = vector3(0,0,0)},
     [`WEAPON_BULLPUPRIFLE`] = {object = `w_ar_bullpuprifle`, item = 'WEAPON_BULLPUPRIFLE', rot = vector3(0,0,0)},
@@ -52,7 +67,7 @@ local Weapons = {
 
 local slots = {
     [1] = {
-        pos = vec3(0.13, -0.19, -0.04), -- Center Of Back
+        pos = vec3(0.15, 0.26, 0.0), -- Center Of Back
         entity = nil,
         hash = nil,
         wep = nil
@@ -209,6 +224,43 @@ AddEventHandler('ox_inventory:currentWeapon', function(data)
     end
 end)
 
+AddEventHandler('ox_inventory:currentWeapon', function(data)
+    if data then
+        if not Weapons[data.hash] then
+			if PlayerJob ~= CivJob then
+				putOnBack(curWeapon)
+				loadAnimDict( "reaction@intimidation@cop@unarmed" )
+				loadAnimDict("rcmjosh4")
+				TaskPlayAnimAdvanced(ped, "reaction@intimidation@cop@unarmed", "intro", GetEntityCoords(ped, true), 0, 0, GetEntityHeading(ped), 8.0, 3.0, -1, 50, 0.325, 0, 0)
+				Citizen.Wait(200)
+				TaskPlayAnim(ped, "rcmjosh4", "josh_leadout_cop2", 8.0, 2.0, -1, 50, 10, 0, 0, 0 )
+				Citizen.Wait(200)
+				ClearPedTasks(ped)
+			else
+				putOnBack(curWeapon)
+				loadAnimDict( "reaction@intimidation@1h" )
+				TaskPlayAnimAdvanced(ped, "reaction@intimidation@1h", "outro", GetEntityCoords(ped, true), 0, 0, GetEntityHeading(ped), 8.0, 3.0, -1, 50, 0.325, 0, 0)
+				Citizen.Wait(500)
+				ClearPedTasks(ped)
+			end
+        end
+    else
+		if PlayerJob ~= CivJob then
+			loadAnimDict("rcmjosh4")
+			TaskPlayAnim(ped, "rcmjosh4", "josh_leadout_cop2", 8.0, 2.0, -1, 48, 10, 0, 0, 0 )
+			Citizen.Wait(300)
+			ClearPedTasks(ped)
+			putOnBack(curWeapon)
+		else
+			loadAnimDict( "reaction@intimidation@1h" )
+			TaskPlayAnimAdvanced(ped, "reaction@intimidation@1h", "intro", GetEntityCoords(ped, true), 0, 0, GetEntityHeading(ped), 8.0, 3.0, -1, 50, 0.125, 0, 0)
+			Citizen.Wait(500)
+			putOnBack(curWeapon)
+			ClearPedTasks(ped)
+		end
+    end
+end)
+
 AddEventHandler('ox_inventory:updateInventory', function(changes)
     for k, v in pairs(changes) do
         if type(v) == 'table' then
@@ -251,5 +303,10 @@ lib.onCache('ped', function(value)
     ped = value
 end)
 
-
-
+--Loads Animation Dictionary
+function loadAnimDict(dict)
+	while (not HasAnimDictLoaded(dict)) do
+		RequestAnimDict(dict)
+		Citizen.Wait(5)
+	end
+end
