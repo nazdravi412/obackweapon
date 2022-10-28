@@ -52,7 +52,7 @@ local Weapons = {
     [`WEAPON_COMBATMG_MK2`] = {object = `w_mg_combatmgmk2`, item = 'WEAPON_COMBATMG_MK2', rot = vector3(0,0,0)},
     [`WEAPON_COMBATMG`] = {object = `w_mg_combatmg`, item = 'WEAPON_COMBATMG', rot = vector3(0,0,0)},
     [`WEAPON_CARBINERIFLE_MK2`] = {object = `w_ar_carbineriflemk2`, item = 'WEAPON_CARBINERIFLE_MK2', rot = vector3(0,0,0)},
-    [`WEAPON_CARBINERIFLE`] = {object = `w_ar_carbinerifle`, item = 'WEAPON_CARBINERIFLE', rot = vector3(175.0,130.0,-0.5)},
+    [`WEAPON_CARBINERIFLE`] = {object = `w_ar_carbinerifle`, item = 'WEAPON_CARBINERIFLE', rot = vector3(0,0,0)},
     [`WEAPON_BULLPUPSHOTGUN`] = {object = `w_sg_bullpupshotgun`, item = 'WEAPON_BULLPUPSHOTGUN', rot = vector3(0,0,0)},
     [`WEAPON_BULLPUPRIFLE_MK2`] = {object = `w_ar_bullpupriflemk2`, item = 'WEAPON_BULLPUPRIFLE_MK2', rot = vector3(0,0,0)},
     [`WEAPON_BULLPUPRIFLE`] = {object = `w_ar_bullpuprifle`, item = 'WEAPON_BULLPUPRIFLE', rot = vector3(0,0,0)},
@@ -67,7 +67,7 @@ local Weapons = {
 
 local slots = {
     [1] = {
-        pos = vec3(0.15, 0.26, 0.0), -- Center Of Back
+        pos = vec3(0.15, 0.26, 0.0), -- Center Of Chest
         entity = nil,
         hash = nil,
         wep = nil
@@ -132,6 +132,7 @@ end
 
 local function putOnBack(hash)
     local whatSlot = checkForSlot(hash)
+	print("Slot: ",whatSlot)
     if whatSlot then
         curWeapon = nil
         local object = Weapons[hash].object
@@ -142,53 +143,25 @@ local function putOnBack(hash)
         slots[whatSlot].entity = prop
         slots[whatSlot].hash = hash
         slots[whatSlot].wep = item
-        AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, 24816), slots[whatSlot].pos.x, slots[whatSlot].pos.y, slots[whatSlot].pos.z, Weapons[hash].rot.x, Weapons[hash].rot.y, Weapons[hash].rot.z, true, true, false, true, 2, true)
+		if whatSlot ~= 1 then
+			AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, 24816), slots[whatSlot].pos.x, slots[whatSlot].pos.y, slots[whatSlot].pos.z, Weapons[hash].rot.x, Weapons[hash].rot.y, Weapons[hash].rot.z, true, true, false, true, 2, true)
+		else
+			AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, 24816), slots[whatSlot].pos.x, slots[whatSlot].pos.y, slots[whatSlot].pos.z, 175.0,130.0,-0.5, true, true, false, true, 2, true)
+		end
     end
 end
 
-local function respawningCheckWeapon()
-    for i = 1, #slots do
-        local slot = slots[i]
-        if slot.entity ~= nil then
-            if DoesEntityExist(slot.entity) then
-                DeleteEntity(slot.entity)
-            end
-            local whatItem = Weapons[slot.hash].item
-            local count = ox_inventory:Search(2, whatItem)
-            local oldHash = slot.hash
-            slots[i].entity = nil
-            slots[i].hash = nil
-            if count > 0 then
-                putOnBack(oldHash)
-            end
-        end
-    end
-end
-
-local function clearSlot(i)
-    DetachEntity(slots[i].entity)
-    DeleteEntity(slots[i].entity)
-    slots[i].entity = nil
-    slots[i].hash = nil
-    slots[i].wep = nil
-end
-
-
-
-local function putOnBack(hash)
-    local whatSlot = checkForSlot(hash)
-    if whatSlot then
-        curWeapon = nil
-        local object = Weapons[hash].object
-        local item = Weapons[hash].item
-        lib.requestModel(object, 500)
-        local coords = GetEntityCoords(ped)
-        local prop = CreateObject(object, coords.x, coords.y, coords.z,  true,  true, true)
-        slots[whatSlot].entity = prop
-        slots[whatSlot].hash = hash
-        slots[whatSlot].wep = item
-        AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, 24816), slots[whatSlot].pos.x, slots[whatSlot].pos.y, slots[whatSlot].pos.z, Weapons[hash].rot.x, Weapons[hash].rot.y, Weapons[hash].rot.z, true, true, false, true, 2, true)
-    end
+function dump(o)
+   if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+         if type(k) ~= 'number' then k = '"'..k..'"' end
+         s = s .. '['..k..'] = ' .. dump(v) .. ','
+      end
+      return s .. '} '
+   else
+      return tostring(o)
+   end
 end
 
 local function respawningCheckWeapon()
