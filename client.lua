@@ -132,7 +132,7 @@ end
 
 local function putOnBack(hash)
     local whatSlot = checkForSlot(hash)
-	print("Slot: ",whatSlot)
+	--print("Slot: ",whatSlot)
     if whatSlot then
         curWeapon = nil
         local object = Weapons[hash].object
@@ -199,8 +199,11 @@ end)
 
 AddEventHandler('ox_inventory:currentWeapon', function(data)
     if data then
-        if not Weapons[data.hash] then
+		local inVehicle = IsPedInAnyVehicle(ped, true)
+		--print(inVehicle)
+        if not Weapons[data.hash] and inVehicle == false then
 			if PlayerJob ~= CivJob then
+				--print("Drawing weapon for LEO.")
 				putOnBack(curWeapon)
 				loadAnimDict( "reaction@intimidation@cop@unarmed" )
 				loadAnimDict("rcmjosh4")
@@ -210,6 +213,7 @@ AddEventHandler('ox_inventory:currentWeapon', function(data)
 				Citizen.Wait(200)
 				ClearPedTasks(ped)
 			else
+				--print("Drawing weapon for Civ.")
 				putOnBack(curWeapon)
 				loadAnimDict( "reaction@intimidation@1h" )
 				TaskPlayAnimAdvanced(ped, "reaction@intimidation@1h", "outro", GetEntityCoords(ped, true), 0, 0, GetEntityHeading(ped), 8.0, 3.0, -1, 50, 0.325, 0, 0)
@@ -218,18 +222,23 @@ AddEventHandler('ox_inventory:currentWeapon', function(data)
 			end
         end
     else
-		if PlayerJob ~= CivJob then
-			loadAnimDict("rcmjosh4")
-			TaskPlayAnim(ped, "rcmjosh4", "josh_leadout_cop2", 8.0, 2.0, -1, 48, 10, 0, 0, 0 )
-			Citizen.Wait(300)
-			ClearPedTasks(ped)
-			putOnBack(curWeapon)
-		else
-			loadAnimDict( "reaction@intimidation@1h" )
-			TaskPlayAnimAdvanced(ped, "reaction@intimidation@1h", "intro", GetEntityCoords(ped, true), 0, 0, GetEntityHeading(ped), 8.0, 3.0, -1, 50, 0.125, 0, 0)
-			Citizen.Wait(500)
-			putOnBack(curWeapon)
-			ClearPedTasks(ped)
+		local inVehicle = IsPedInAnyVehicle(ped, true)
+		if inVehicle == false then
+			if PlayerJob ~= CivJob then
+				--print("Putting weapon on back for leo")
+				loadAnimDict("rcmjosh4")
+				TaskPlayAnim(ped, "rcmjosh4", "josh_leadout_cop2", 8.0, 2.0, -1, 48, 10, 0, 0, 0 )
+				Citizen.Wait(300)
+				ClearPedTasks(ped)
+				putOnBack(curWeapon)
+			else
+				--print("Putting weapon on back for civs")
+				loadAnimDict( "reaction@intimidation@1h" )
+				TaskPlayAnimAdvanced(ped, "reaction@intimidation@1h", "intro", GetEntityCoords(ped, true), 0, 0, GetEntityHeading(ped), 8.0, 3.0, -1, 50, 0.125, 0, 0)
+				Citizen.Wait(500)
+				putOnBack(curWeapon)
+				ClearPedTasks(ped)
+			end
 		end
     end
 end)
@@ -257,20 +266,20 @@ AddEventHandler('ox_inventory:updateInventory', function(changes)
     end
 end)
 
-lib.onCache('vehicle', function(value)
-    if value then
-        for i = 1, #slots do
-            clearSlot(i)
-        end
-    else
-        for k, v in pairs(Weapons) do
-            local count = ox_inventory:Search(2, v.item)
-            if count and count >= 1 then
-                putOnBack(k)
-            end
-        end
-    end
-end)
+-- lib.onCache('vehicle', function(value)
+    -- if value then
+        -- for i = 1, #slots do
+            -- clearSlot(i)
+        -- end
+    -- else
+        -- for k, v in pairs(Weapons) do
+            -- local count = ox_inventory:Search(2, v.item)
+            -- if count and count >= 1 then
+                -- putOnBack(k)
+            -- end
+        -- end
+    -- end
+-- end)
 
 lib.onCache('ped', function(value)
     ped = value
